@@ -46,5 +46,72 @@ cat /var/lib/jenkins/secrets/initialAdminPassword
 ```
 
 
- 
+Next, proceed with installing Git on the Jenkins Server.
+
+```
+sudo yum install git -y
+```
+Next step is to integrate git with jenkins.
+
+Jenkins -> Dashboard -> Manage Jenkins -> Plugins -> Available ->
+
+Search for GitHub plugin and install it.
+
+
+
+
+Next step is to Configure Jenkins.
+
+Jenkins -> Manage Jenkins -> Tools -> Git ->
+
+Give a name and type “git” in the Path to executable.
+
+
+
+
+
+ Apply -> Save.
+
+Successfully integrated Github with Jenkins.
+
+
+
+Next step is to install Maven on the Jenkins server.
+
+```
+cd /opt
+wget https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz
+tar -xvzf apache-maven-3.9.4-bin.tar.gz
+mv apache-maven-3.9.4 maven
+cd maven/bin
+./mvn -v
+cd ~
+vim .bash_profile
+    M2_HOME=/opt/maven
+    M2=/opt/maven/bin
+    JAVA_HOME=/usr/lib/jvm/java-11-openjdk-11.0.19.0.7-1.amzn2.0.1.x86_64
+    PATH=$PATH:$HOME/bin:$JAVA_HOME:$M2_HOME:$M2
+            (save it)
+source .bash_profile
+echo $PATH
+```
+
+
+Need to install maven plugins in jenkins.
+
+Jenkins -> Manage Jenkins -> Plugins -> Available ->
+
+search for Maven Integration -> install
+
+
+Lets configure.
+
+Manage Jenkins -> Tools -> JDK -> Add JDK -> give name and enter Java home path -> /usr/lib/jvm/java-11-openjdk-11.0.19.0.7–1.amzn2.0.1.x86_64
+
+
+
+
+
+
+
 
