@@ -45,6 +45,8 @@ need to get the Administrator Password from
 cat /var/lib/jenkins/secrets/initialAdminPassword
 ```
 
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/jenkinhome.png)
+
 
 Next, proceed with installing Git on the Jenkins Server.
 
