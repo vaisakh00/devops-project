@@ -217,7 +217,98 @@ ansible all -m ping
 Lets Integrate Ansible with Jenkins
 Jenkins -> Manage Jenkins -> System -> Pubish Over SSH -> Add -> SSH Server -> Give Name (ansible-server)-> Hostname : < ansible private ip address > -> Username : ansadmin -> Advanced -> enable password authentication -> Password : ( give the password of ansadmin ) -> Test Configuration.
 
+Goto Ansible server terminal
 
+```
+sudo su - ansadmin
+cd /opt
+sudo mkdir docker
+sudo chown ansadmin:ansadmin docker
+```
+
+```
+sudo yum install docker -y
+sudo usermod -aG docker ansadmin
+sudo systemctl enable --now docker
+cd /opt/docker
+vim Dockerfile
+    FROM tomcat:latest
+    RUN cp -R /usr/local/tomcat/webapps.dist/* /usr/local/tomcat/webapps
+    COPY ./*.war /usr/local/tomcat/webapps
+sudo chmod 777 /var/run/docker.sock
+```
+```
+sudo vim /etc/ansible/hosts
+    [docker]
+    < docker private ip >
+
+     [ansible]
+    < ansible private ip >
+```
+```
+ssh-copy-ip < ansible private ip >
+sudos u - ansadmin
+docker login
+```
+Enter Username and Password of Dockerhub account to login
+
+```
+vim webapp.yml
+ ---
+ - hosts: ansible
+   tasks:
+     - name: create docker image
+       command: docker build -t webapp:latest .
+       args:
+         chdir: /opt/docker
+ 
+     - name: create tag to push image onto dockerhub
+       command: docker tag webapp:latest vaisakh573/webapp:latest
+ 
+     - name: push docker image
+       command: docker push vaisakh573/webapp:latest
+
+```
+```
+cd /opt/docker
+vim deploy_webapp.yml
+ ---
+ - hosts: docker
+   tasks:
+     - name: Stop existing container
+       command: docker stop webapp-server
+       ignore_errors: yes
+ 
+     - name: Remove the container
+       command: docker rm webapp-server
+       ignore_errors: yes
+ 
+     - name: Remove image
+       command: docker rmi vaisakh573/webapp:latest
+       ignore_errors: yes
+ 
+     - name: Create container
+       command: docker run -d --name webapp-server -p 8082:8080 vaisakh573/webapp:latest
+```                                
+
+
+Now lets create the jenkins job
+Jenkins -> New item -> Name -> Maven project -> OK
+
+in source code management -> Git: add repositry url -> branches to build : specify the branch
+
+
+in Build Triggers -> Poll SCM schedule * * * * * 
+
+build -> Root POM : pom.xml -> Goals and options: clean install
+
+
+Post-build Actions -> send build artifacts over SSH -> SSH Server -> name: ansible-server -> source files: webapp/target/*.war -> remove prefix: webapp/target -> remote directory: //opt//docker -> Exec command
+```
+ansible-playbook /opt/docker/regapp.yml;
+sleep;
+ansible-playbook /opt/docker/deploy_regapp.yml;
+```
 
 
 
