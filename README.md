@@ -18,7 +18,7 @@ Deploy your web application on an Apache Tomcat server, a widely-used and reliab
 
 Initially, we are going to setup Jenkins server
  
-Jenkins installation steps 
+### Jenkins installation steps 
 
 ```
 sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
@@ -77,7 +77,7 @@ Give a name and type “git” in the Path to executable.
 Successfully integrated Github with Jenkins.
 
 
-Next step is to install Maven on the Jenkins server.
+#### Next step is to install Maven on the Jenkins server.
 
 ```
 yum install maven -y
@@ -110,23 +110,11 @@ Apply -> Save.
 
 Successfully configured and integrated Maven with Jenkins.
 
-Next step is setting up a docker server
+### Next step is setting up a docker server
 
 launch a ec2 instance, connect to terminal and install docker
 
-```
-sudo -i
-yum install docker -y
-systemctl start docker
-systemctl enable docker
-systemctl status docker
-useradd dockeradmin
-passwd dockeradmin
-usermod -aG docker dockeradmin
-vim /etc/ssh/sshd_config
- ( PasswordAuthentication yes )
-systemctl restart sshd
-```
+
 Lets Integrate Docker with Jenkins
 
 Jenkins -> Manage Jenkins -> Plugins -> Available -> Search for Publish Over SSH -> Install
@@ -146,23 +134,10 @@ Jenkins -> Manage Jenkins -> System -> Publish Over SSH -> SSH Servers -> Add ->
 
 Successfully instegrated docker with jenkins.
 
-Now goto terminal
-```
-cd /opt
-mkdir docker
-cd docker
-chown -R dockeradmin:dockeradmin /opt/docker
-vim Dockerfile
-   FROM tomcat:latest
-   RUN cp -R /usr/local/tomcat/webapps.dist/* /usr/local/tomcat/webapps
-   COPY ./*.war /usr/local/tomcat/webapps
- 
-chmod 777 /var/run/docker.sock
-```
-
 We are going to use Ansible as a deployment tool 
 
-setting up a Ansible server.
+### setting up a Ansible server.
+
 For that we need to create an ec2 instance and connect to terminal
 
 
@@ -185,6 +160,7 @@ install ansible
 sudo yum install ansible -y
 ```
 Lets Integrate Docker with Ansible
+
 Connect to Docker host terminal
 ```
 useradd ansadmin
@@ -200,6 +176,7 @@ vim /etc/ansible/hosts
 ```
 
 Clear everything in this file and add this 
+
 ```
 [docker]
 < docker private ip >
@@ -214,8 +191,14 @@ ssh-copy-id < docker private ip >
 ```
 ansible all -m ping
 ```
+
 Lets Integrate Ansible with Jenkins
+
 Jenkins -> Manage Jenkins -> System -> Pubish Over SSH -> Add -> SSH Server -> Give Name (ansible-server)-> Hostname : < ansible private ip address > -> Username : ansadmin -> Advanced -> enable password authentication -> Password : ( give the password of ansadmin ) -> Test Configuration.
+
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/Screenshot9.png)
+
+
 
 Goto Ansible server terminal
 
@@ -237,6 +220,7 @@ vim Dockerfile
     COPY ./*.war /usr/local/tomcat/webapps
 sudo chmod 777 /var/run/docker.sock
 ```
+
 ```
 sudo vim /etc/ansible/hosts
     [docker]
@@ -245,14 +229,18 @@ sudo vim /etc/ansible/hosts
      [ansible]
     < ansible private ip >
 ```
+
 ```
 ssh-copy-ip < ansible private ip >
 sudos u - ansadmin
 docker login
 ```
+
 Enter Username and Password of Dockerhub account to login
 
+
 ```
+cd /opt/docker
 vim webapp.yml
  ---
  - hosts: ansible
@@ -291,24 +279,67 @@ vim deploy_webapp.yml
        command: docker run -d --name webapp-server -p 8082:8080 vaisakh573/webapp:latest
 ```                                
 
+Goto Docker host terminal
 
-Now lets create the jenkins job
+```
+chmod 777 /var/run/docker.sock
+```
+
+### Now lets create the jenkins job
+
 Jenkins -> New item -> Name -> Maven project -> OK
 
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/Screenshot9-1.png)
+
+
 in source code management -> Git: add repositry url -> branches to build : specify the branch
+
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/Screenshot10.png)
 
 
 in Build Triggers -> Poll SCM schedule * * * * * 
 
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/Screenshot11.png)
+
+
 build -> Root POM : pom.xml -> Goals and options: clean install
+
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/Screenshot12.png)
+
 
 
 Post-build Actions -> send build artifacts over SSH -> SSH Server -> name: ansible-server -> source files: webapp/target/*.war -> remove prefix: webapp/target -> remote directory: //opt//docker -> Exec command
 ```
-ansible-playbook /opt/docker/regapp.yml;
+ansible-playbook /opt/docker/webapp.yml;
 sleep;
-ansible-playbook /opt/docker/deploy_regapp.yml;
+ansible-playbook /opt/docker/deploy_webapp.yml
 ```
+Apply -> save
+
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/Screenshot13.png)
+
+
+
+Then build the project
+
+
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/Screenshot14.png)
+
+now you can access the webpage with **http://docker-server-ip:8082/webapp/**
+
+![Alt Text](https://github.com/vaisakh00/devops-project/raw/main/images/Screenshot15.png)
+
+We have configured our Jenkins job in such a way that if somebody modified code, it should automatically build the code, create the image, create the container and we could able to access those changes from the browser.
+
+
+
+
+
+
+
+
+
+
 
 
 
