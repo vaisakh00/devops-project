@@ -1,0 +1,14 @@
+---
+- hosts: docker
+  tasks:
+    - name: stop existing container
+      command: docker stop webapp-server
+      ignore_errors: yes
+    - name: remove the container
+      command: docker rm webapp-server
+      ignore_errors: yes
+    - name: remove image
+      command: docker rmi vaisakh573/webapp:latest
+      ignore_errors: yes
+    - name: create container
+      command: docker run -d --name webapp-server -p 8082:8080 vaisakh573/webapp:latest
