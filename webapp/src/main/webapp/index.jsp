@@ -57,7 +57,7 @@
     <h1>Welcome to DevOps Project</h1>
 
     <footer>
-        <p>Thank you for visiting our DevOps Project !</p>
+        <p>Thank you for visiting our DevOps Project page !</p>
         <p>Explore more about DevOps and stay tuned for updates.</p>
     </footer>
 </body>
